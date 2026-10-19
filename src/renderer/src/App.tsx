@@ -7,6 +7,7 @@ import { OfficeFloor } from '@/scene/office/OfficeFloor';
 import { StudioFloor } from '@/studio/StudioFloor';
 import { StudioPanel, useStudioPolling } from '@/studio/StudioPanel';
 import { useStudio } from '@/studio/studioStore';
+import { SUITE_SANS } from '@/studio/type';
 import { useHive } from '@/hooks/useHive';
 import { useResolvedGodName } from '@/hooks/useResolvedGodName';
 import { useGodNameSync } from '@/i18n/useGodNameSync';
@@ -440,11 +441,14 @@ export function App() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   pointerEvents: 'none'
                 }}>
-                  <div style={{ pointerEvents: 'auto', width: 360 }}>
-                    <PixelPanel variant="dialog" title="STUDIO FLOOR" noPadding>
-                      <p style={{ margin: 0, padding: 16, fontSize: 13, lineHeight: '20px' }}>
-                        Sign in with mDashboard on the right to put your team at their desks.
-                      </p>
+                  <div style={{ pointerEvents: 'auto', width: 360, fontFamily: SUITE_SANS, letterSpacing: '-0.012em' }}>
+                    <PixelPanel variant="dialog" noPadding>
+                      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <h2 style={{ margin: 0, fontSize: 17, lineHeight: '22px', fontWeight: 600, letterSpacing: '-0.022em' }}>Studio floor</h2>
+                        <p style={{ margin: 0, fontSize: 14, lineHeight: '20px' }}>
+                          Sign in with mDashboard on the right to put your team at their desks.
+                        </p>
+                      </div>
                     </PixelPanel>
                   </div>
                 </div>

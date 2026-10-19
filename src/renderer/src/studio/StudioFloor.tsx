@@ -31,6 +31,7 @@ import { colors } from '@/design/tokens';
 import { useStore } from '@/store/store';
 import { deskLine, seatedPeople, type FloorPerson, type StudioFloor as Floor } from '@shared/mdashboard';
 import { useStudio } from './studioStore';
+import { SUITE_CANVAS } from './type';
 
 interface Desk {
   character: Character;
@@ -126,6 +127,10 @@ export function StudioFloor() {
     const cleanups: Array<() => void> = [];
 
     const init = async () => {
+      // Canvas text draws with whatever face is loaded at that moment, so make
+      // sure Inter is in before the first nameplate (it is the face wherever
+      // the platform's own is not).
+      await document.fonts?.load('700 12px Inter').catch(() => undefined);
       const theme = await loadTheme(officeTheme);
       await app.init({
         background: theme.palette.background,
@@ -231,7 +236,8 @@ export function StudioFloor() {
           seatDirection: facing(seatTile),
           spawnTile: p.state === 'away' ? seatTile : entrance,
           glowColor: hexToNumber(theme.cast.byName[name].shirt),
-          onClick: (id) => useStudio.getState().selectPerson(id)
+          onClick: (id) => useStudio.getState().selectPerson(id),
+          labelFont: SUITE_CANVAS
         });
         character.show(charLayer);
         const desk: Desk = { character, seat, doneToday: p.counts.done_today };

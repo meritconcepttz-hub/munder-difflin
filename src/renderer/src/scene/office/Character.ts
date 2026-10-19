@@ -91,6 +91,9 @@ interface CharacterOptions {
   /** Direction faced while seated. Default 'down' so the face is toward the user. */
   seatDirection?: Direction;
   onClick?: (agentId: string) => void;
+  /** Face for the nameplate and thought cloud, together. Defaults to the
+   *  floor's monospace; the mOffice studio floor passes mSuite's face. */
+  labelFont?: string;
 }
 
 export class Character {
@@ -174,7 +177,8 @@ export class Character {
     this.py = pos.y + this.mapRenderer.tileSize;
     this.sprite.setPosition(this.px, this.py);
 
-    this.thoughtBubble = new ThoughtBubble();
+    const labelFont = options.labelFont ?? 'monospace';
+    this.thoughtBubble = new ThoughtBubble(labelFont);
     // Keep the cloud inside the world — Michael's corner office would
     // otherwise push his bubble off the top/left map edge.
     this.thoughtBubble.setBounds(
@@ -188,6 +192,8 @@ export class Character {
     // every other in-world Pixi label (ThoughtBubble, ToolBubble) uses it, and
     // a nameplate in a different face from the bubble right above it reads as
     // a bug. Deliberately not `type.mono`; move all three together or none.
+    // `labelFont` keeps that rule: it sets this nameplate and this avatar's
+    // cloud as one, and only the studio floor (which has no ToolBubble) sets it.
     this.nameTag = new Container();
     this.nameTag.zIndex = NAME_TAG_Z;
     this.nameTag.eventMode = 'none';
@@ -199,7 +205,7 @@ export class Character {
         fontWeight: 'bold',
         fill: colors.cream[50],
         stroke: { color: colors.ink[900], width: NAME_TAG_STROKE_WIDTH, join: 'round' },
-        fontFamily: 'monospace',
+        fontFamily: labelFont,
         align: 'center'
       }
     });

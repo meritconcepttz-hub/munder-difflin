@@ -13,6 +13,7 @@ import {
   type FloorPerson, type FloorProject, type FloorTask, type FloorState, type ProjectHealth
 } from '@shared/mdashboard';
 import { useStudio, type StudioTab } from './studioStore';
+import { SUITE_ROUNDED, SUITE_SANS } from './type';
 
 const STATE_COLOR: Record<FloorState, string> = {
   working: 'var(--cth-status-working)',
@@ -29,12 +30,13 @@ const HEALTH_COLOR: Record<ProjectHealth, string> = {
   overdue: 'var(--cth-coral)'
 };
 
-const label: CSSProperties = {
-  fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '14px',
-  color: 'var(--cth-ink-500)', letterSpacing: 0.5, textTransform: 'uppercase'
-};
-const small: CSSProperties = { fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-500)' };
-const body: CSSProperties = { fontSize: 13, lineHeight: '19px', color: 'var(--cth-ink-900)' };
+// mSuite's type scale (mDashboard tailwind.config.js): headline 17/22,
+// callout 14/20, footnote 13/18, caption 12/16. Labels are sentence case.
+const label: CSSProperties = { fontSize: 12, lineHeight: '16px', fontWeight: 500, color: 'var(--cth-ink-500)', letterSpacing: 0 };
+const sectionLabel: CSSProperties = { fontSize: 13, lineHeight: '18px', fontWeight: 600, color: 'var(--cth-ink-500)', letterSpacing: '-0.004em' };
+const small: CSSProperties = { fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' };
+const body: CSSProperties = { fontSize: 14, lineHeight: '20px', color: 'var(--cth-ink-900)', letterSpacing: '-0.008em' };
+const figure: CSSProperties = { fontFamily: SUITE_ROUNDED, fontVariantNumeric: 'tabular-nums', fontWeight: 600, letterSpacing: '-0.017em' };
 const rowButton: CSSProperties = {
   display: 'block', width: '100%', textAlign: 'start', padding: '10px 12px',
   background: 'transparent', border: 'none', borderBottom: '1px solid var(--cth-ink-100)',
@@ -79,7 +81,7 @@ export function StudioPanel() {
   if (!link || link.state !== 'signed-in') return <SignInCard signingIn={link?.state === 'signing-in'} />;
   if (!floor && reason === 'forbidden') {
     return (
-      <Shell title="STUDIO FLOOR">
+      <Shell title="Studio floor">
         <Pad>
           <p style={body}>{error}</p>
           <p style={small}>Signed in as {link.name || link.email}. Ask the studio admin, or sign in with an admin account.</p>
@@ -90,7 +92,7 @@ export function StudioPanel() {
   }
   if (!floor) {
     return (
-      <Shell title="STUDIO FLOOR">
+      <Shell title="Studio floor">
         <Pad><p style={body}>{error ?? 'Reading the floor from mDashboard…'}</p></Pad>
       </Shell>
     );
@@ -98,7 +100,7 @@ export function StudioPanel() {
 
   const person = selectedId ? floor.people.find((p) => p.id === selectedId) : undefined;
   return (
-    <Shell title={floor.studio ? floor.studio.toUpperCase() : 'STUDIO FLOOR'}>
+    <Shell title={floor.studio || 'Studio floor'}>
       <Header />
       <Totals />
       {person ? <PersonCard person={person} /> : <Tabs />}
@@ -106,11 +108,26 @@ export function StudioPanel() {
   );
 }
 
+/** The panel's frame. Everything inside it is set in mSuite's face: the two
+ *  --cth font tokens are pointed at it here, so the shared PixelButton and
+ *  PixelPanel follow without changing how they look on the agent floor. */
 function Shell({ title, children }: { title: string; children: ReactNode }) {
+  const suiteType = {
+    '--cth-font-ui': SUITE_SANS,
+    '--cth-font-display': SUITE_SANS,
+    fontFamily: SUITE_SANS,
+    letterSpacing: '-0.012em',
+    height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0
+  } as CSSProperties;
   return (
-    <PixelPanel variant="default" noPadding title={title} style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{children}</div>
-    </PixelPanel>
+    <div style={suiteType}>
+      <PixelPanel variant="default" noPadding style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <h2 style={{ margin: 0, padding: '12px 12px 10px', fontSize: 17, lineHeight: '22px', fontWeight: 600, letterSpacing: '-0.022em', color: 'var(--cth-ink-900)', borderBottom: '1px solid var(--cth-ink-100)' }}>
+          {title}
+        </h2>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{children}</div>
+      </PixelPanel>
+    </div>
   );
 }
 
@@ -144,7 +161,7 @@ function SignInCard({ signingIn }: { signingIn: boolean }) {
   };
 
   return (
-    <Shell title="CONNECT MDASHBOARD">
+    <Shell title="Connect mDashboard">
       <Pad>
         <p style={body}>
           Put your team on the floor. mOffice reads mDashboard to show who is in, what each person is on,
@@ -223,7 +240,7 @@ function Totals() {
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1, background: 'var(--cth-ink-100)', borderBottom: '1px solid var(--cth-ink-100)' }}>
       {cells.map(([k, v, c]) => (
         <div key={k} style={{ background: 'var(--cth-cream-100)', padding: '8px 10px' }}>
-          <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 14, lineHeight: '20px', color: c ?? 'var(--cth-ink-900)' }}>{v}</div>
+          <div style={{ ...figure, fontSize: 20, lineHeight: '25px', color: c ?? 'var(--cth-ink-900)' }}>{v}</div>
           <div style={label}>{k}</div>
         </div>
       ))}
@@ -242,7 +259,7 @@ function Tabs() {
           <button
             key={id} role="tab" aria-selected={tab === id} type="button" onClick={() => setTab(id)}
             style={{
-              flex: 1, padding: '8px 0', border: 'none', cursor: 'pointer', font: 'inherit', fontSize: 12,
+              flex: 1, padding: '8px 0', border: 'none', cursor: 'pointer', font: 'inherit', fontSize: 13, fontWeight: tab === id ? 600 : 400,
               background: tab === id ? 'var(--cth-cream-200)' : 'transparent',
               color: tab === id ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
               boxShadow: tab === id ? 'inset 0 -2px 0 var(--cth-ink-900)' : 'none'
@@ -335,9 +352,9 @@ function PersonCard({ person: p }: { person: FloorPerson }) {
           {/* An initial, not the mDashboard photo: the renderer's CSP allows no
               remote images, and opening it to them would let any agent's
               markdown load a tracking pixel too. */}
-          <div aria-hidden="true" style={{ width: 44, height: 44, borderRadius: 2, background: 'var(--cth-cream-200)', display: 'grid', placeItems: 'center', fontFamily: 'var(--cth-font-display)', fontSize: 14 }}>{p.name.slice(0, 1)}</div>
+          <div aria-hidden="true" style={{ width: 44, height: 44, borderRadius: 2, background: 'var(--cth-cream-200)', display: 'grid', placeItems: 'center', fontSize: 17, fontWeight: 600 }}>{p.name.slice(0, 1)}</div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ ...body, fontWeight: 600, fontSize: 15 }}>{p.name}</div>
+            <div style={{ fontSize: 17, lineHeight: '22px', fontWeight: 600, letterSpacing: '-0.022em', color: 'var(--cth-ink-900)' }}>{p.name}</div>
             <div style={{ ...small, display: 'flex', alignItems: 'center', gap: 6 }}>
               <Dot state={p.state} /> {STATE_LABEL[p.state]}
               {p.role ? ` · ${p.role}` : ''}
@@ -345,20 +362,20 @@ function PersonCard({ person: p }: { person: FloorPerson }) {
           </div>
         </div>
         <div>
-          <div style={label}>On now</div>
+          <div style={sectionLabel}>On now</div>
           {p.focus ? <TaskLine task={p.focus} /> : <p style={small}>Nothing in progress.</p>}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
           {facts.map(([k, v]) => (
             <div key={k}>
-              <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13 }}>{v}</div>
+              <div style={{ ...figure, fontSize: 17, lineHeight: '22px' }}>{v}</div>
               <div style={label}>{k}</div>
             </div>
           ))}
         </div>
         {p.counts.overdue > 0 && <p style={{ ...small, color: 'var(--cth-coral)' }}>{p.counts.overdue} overdue</p>}
         <div>
-          <div style={label}>Finished this week</div>
+          <div style={sectionLabel}>Finished this week</div>
           {p.done_recent.length ? p.done_recent.map((t) => <TaskLine key={t.id} task={t} done />) : <p style={small}>Nothing finished yet this week.</p>}
         </div>
         <p style={small}>
