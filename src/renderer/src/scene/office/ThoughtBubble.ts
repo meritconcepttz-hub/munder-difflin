@@ -65,7 +65,9 @@ export class ThoughtBubble {
   private boundsW = 0;
   private boundsH = 0;
 
-  constructor() {
+  /** `fontFamily` defaults to the floor's monospace; the mOffice studio floor
+   *  passes mSuite's face (see Character's labelFont). */
+  constructor(fontFamily = 'monospace') {
     this.container = new Container();
     this.container.zIndex = 100000;
     this.container.eventMode = 'none';
@@ -84,7 +86,7 @@ export class ThoughtBubble {
         fontSize: FONT_SIZE,
         fontWeight: 'bold',
         fill: TEXT_COLOR,
-        fontFamily: 'monospace',
+        fontFamily,
         align: 'left',
         wordWrap: true,
         wordWrapWidth: WRAP_WIDTH,

@@ -4,6 +4,10 @@ import { startMockLoop, stopMockLoop } from '@/store/mockEvents';
 import type { HarnessConfig } from '@/store/config';
 import { DEFAULT_ORG_TRIGGER } from '@shared/triggers';
 import { OfficeFloor } from '@/scene/office/OfficeFloor';
+import { StudioFloor } from '@/studio/StudioFloor';
+import { StudioPanel, useStudioPolling } from '@/studio/StudioPanel';
+import { useStudio } from '@/studio/studioStore';
+import { SUITE_SANS } from '@/studio/type';
 import { useHive } from '@/hooks/useHive';
 import { useResolvedGodName } from '@/hooks/useResolvedGodName';
 import { useGodNameSync } from '@/i18n/useGodNameSync';
@@ -57,6 +61,12 @@ export function App() {
   const setSidebarWidth = useStore(s => s.setSidebarWidth);
   const ideOpen = useStore(s => s.ideOpen);
   const setIdeOpen = useStore(s => s.setIdeOpen);
+  // mOffice: which floor is on screen, the agents' or the studio team's from
+  // mDashboard. The agents keep running either way; only the view changes.
+  const floorMode = useStudio(s => s.mode);
+  const setFloorMode = useStudio(s => s.setMode);
+  const studioSignedIn = useStudio(s => s.link?.state === 'signed-in');
+  useStudioPolling();
 
   const [config, setConfig] = useState<HarnessConfig | null>(null);
   // Whether the user has passed the launch-time hive picker this session. Starts
@@ -310,6 +320,30 @@ export function App() {
         }}>
           {config.autoMode ? 'auto mode on' : 'auto mode off'}
         </span>
+        {/* mOffice: the agents' floor, or the studio team from mDashboard. */}
+        <div
+          role="tablist"
+          aria-label="Floor"
+          className="cth-titlebar-nodrag"
+          style={{ marginLeft: 'auto', display: 'inline-flex', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 2 }}
+        >
+          {([['agents', 'Agents'], ['studio', 'Studio']] as const).map(([id, name]) => (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={floorMode === id}
+              className="cth-tip"
+              data-tip={id === 'studio' ? 'Your team from mDashboard' : 'Your agents'}
+              onClick={() => setFloorMode(id)}
+              style={{
+                height: 28, padding: '0 10px', border: 'none', cursor: 'pointer',
+                fontFamily: 'var(--cth-font-ui)', fontSize: 12,
+                background: floorMode === id ? 'var(--cth-ink-900)' : 'var(--cth-paper-100)',
+                color: floorMode === id ? 'var(--cth-cream-50)' : 'var(--cth-ink-700)'
+              }}
+            >{name}</button>
+          ))}
+        </div>
         {/* v0.3.4: theme + fullscreen live HERE (top right), not buried in the
             terminal header — and the theme darkens the whole app, terminals
             included (design/theme.ts + tokens.css dark block). */}
@@ -333,7 +367,6 @@ export function App() {
           data-tip={appThemeNow === 'dark' ? 'Light theme' : 'Dark theme'}
           aria-label="Toggle dark mode"
           style={{
-            marginLeft: 'auto',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: 28, height: 28, padding: 0,
             background: 'var(--cth-paper-100)',
@@ -399,6 +432,30 @@ export function App() {
         gap: 0
       }}>
         <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
+          {floorMode === 'studio' ? (
+            <>
+              <StudioFloor />
+              {!studioSignedIn && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  pointerEvents: 'none'
+                }}>
+                  <div style={{ pointerEvents: 'auto', width: 360, fontFamily: SUITE_SANS, letterSpacing: '-0.012em' }}>
+                    <PixelPanel variant="dialog" noPadding>
+                      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <h2 style={{ margin: 0, fontSize: 17, lineHeight: '22px', fontWeight: 600, letterSpacing: '-0.022em' }}>Studio floor</h2>
+                        <p style={{ margin: 0, fontSize: 14, lineHeight: '20px' }}>
+                          Sign in with mDashboard on the right to put your team at their desks.
+                        </p>
+                      </div>
+                    </PixelPanel>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+          <>
           <OfficeFloor />
           <MemoryPanel />
           {agentCount === 0 && godStatus === 'booting' && <MichaelBooting />}
@@ -424,6 +481,8 @@ export function App() {
               </div>
             </div>
           )}
+          </>
+          )}
         </div>
 
         <SidebarSplitter
@@ -436,7 +495,9 @@ export function App() {
           width: sidebarWidth, flexShrink: 0,
           minHeight: 0, display: 'flex', flexDirection: 'column'
         }}>
-          {agent ? (
+          {floorMode === 'studio' ? (
+            <StudioPanel />
+          ) : agent ? (
             <AgentDetailPanel agent={agent} />
           ) : godStatus === 'booting' ? (
             <PixelPanel variant="default" noPadding style={{
@@ -477,7 +538,7 @@ export function App() {
         </div>
       </div>
 
-      <AgentStrip config={config} />
+      {floorMode === 'agents' && <AgentStrip config={config} />}
 
       {addAgentOpen && (
         <AddAgentModal
