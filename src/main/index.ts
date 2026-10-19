@@ -62,6 +62,7 @@ import { IntegrationBroker } from './integrationBroker';
 import * as integrations from './integrations';
 import { validateBaseUrl, buildAuthHeaders, resolveUpstreamUrl, secretRefFor, INTEGRATION_TEMPLATES } from '../shared/integrations';
 import { RosterStore } from './roster';
+import { MDashboardLink } from './mdashboard';
 import { buildWorkerLaunch } from './workerLaunch';
 import { ControlRegistry } from './control';
 import { WorkerWakeWatchdog, WORKER_WAKE_REPORT_MS, activityEvidenceAt, type WorkerWakeFacts } from './workerWake';
@@ -4432,6 +4433,11 @@ ipcMain.handle('freeflow:transcribe', async (_evt, arg: unknown) => {
 // short-lived EPHEMERAL client secret; the real key never crosses IPC. All wiring
 // lives in ./realtime so this stays a single registration line.
 registerRealtimeIpc();
+
+// ─── IPC: mOffice studio floor (mDashboard link) ─────────────────────────────
+// Read-only link to Merit Concept's mDashboard: loopback sign-in, the token kept
+// encrypted in main, and the officeFloor snapshot. See ./mdashboard.
+new MDashboardLink().register();
 
 // ─── IPC: Realtime Michael voice ACTIONS (rt-5, Phase 2) ─────────────────────
 // Thin adapters over the SAME main fns the god PTY already uses. ALL of the safety

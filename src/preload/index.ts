@@ -13,6 +13,7 @@ export type { HeroPayload } from '../shared/heroPayload';
 import type { ModelCatalog } from '../shared/modelCatalogPayload';
 export type { ModelCatalog, CatalogModel } from '../shared/modelCatalogPayload';
 import type { HookEvent } from '../shared/hookEvents';
+import type { FloorResult, LinkStatus } from '../shared/mdashboard';
 export type { HookEvent } from '../shared/hookEvents';
 import type { LocalSkill, CatalogSkill } from '../main/skills';
 export type { LocalSkill, CatalogSkill } from '../main/skills';
@@ -1119,6 +1120,25 @@ const api = {
    *  `cwd` isn't a repo, or the repo has no Actions. */
   githubCIRuns: (cwd: string): Promise<{ ok: boolean; runs?: CIRun[]; error?: string }> =>
     ipcRenderer.invoke('github:ciRuns', cwd),
+
+  // ─── mOffice studio floor (mDashboard link, read only) ──────────────────────
+  // The token stays in main; the renderer only learns who is signed in and gets
+  // the officeFloor snapshot. See src/shared/mdashboard.ts.
+  mdashboardStatus: (): Promise<LinkStatus> => ipcRenderer.invoke('mdashboard:status'),
+  mdashboardSettings: (): Promise<{ baseUrl: string; appId: string }> => ipcRenderer.invoke('mdashboard:settings'),
+  mdashboardSetSettings: (input: { baseUrl: string; appId: string }): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('mdashboard:setSettings', input),
+  mdashboardSignIn: (): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke('mdashboard:signIn'),
+  mdashboardCancelSignIn: (): Promise<void> => ipcRenderer.invoke('mdashboard:cancelSignIn'),
+  mdashboardSignOut: (): Promise<void> => ipcRenderer.invoke('mdashboard:signOut'),
+  mdashboardFloor: (): Promise<FloorResult> => ipcRenderer.invoke('mdashboard:floor'),
+  /** Open a path of mDashboard ("/tasks/abc") in the browser. */
+  mdashboardOpen: (path: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('mdashboard:open', path),
+  onMdashboardStatus: (cb: (s: LinkStatus) => void): (() => void) => {
+    const listener = (_e: IpcRendererEvent, payload: LinkStatus) => cb(payload);
+    ipcRenderer.on('mdashboard:status', listener);
+    return () => ipcRenderer.removeListener('mdashboard:status', listener);
+  },
 
   // ─── Desktop notifications ───────────────────────────────────────────────────
   /** Toggle native desktop notifications for agent lifecycle events. */
